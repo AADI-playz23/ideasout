@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Science Models & Projects Showcase</title>
+  <title>Science Models & Projects Showcase (Supabase)</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header class="site-header">
@@ -58,7 +59,6 @@
     </section>
   </main>
 
-  <!-- Project details modal -->
   <div id="project-modal" class="modal hidden" role="dialog" aria-hidden="true">
     <div class="modal-content">
       <button id="modal-close" class="modal-close">&times;</button>
@@ -66,15 +66,13 @@
     </div>
   </div>
 
-  <!-- Simple login/signup dialog -->
   <div id="auth-modal" class="modal hidden" role="dialog" aria-hidden="true">
     <div class="modal-content auth">
       <button id="auth-close" class="modal-close">&times;</button>
-
       <div id="auth-forms">
         <div id="login-form" class="auth-form">
           <h3>Login</h3>
-          <label>Username
+          <label>Email
             <input type="text" id="login-username">
           </label>
           <label>Password
@@ -89,7 +87,7 @@
 
         <div id="signup-form" class="auth-form hidden">
           <h3>Sign up</h3>
-          <label>Username
+          <label>Email
             <input type="text" id="signup-username">
           </label>
           <label>Password
