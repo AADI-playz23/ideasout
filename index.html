@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Science Models & Projects Showcase</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header class="site-header">
@@ -28,23 +29,19 @@
         <label>Title
           <input type="text" id="project-title" required>
         </label>
-
         <label>Image
           <input type="file" id="project-image" accept="image/*">
         </label>
         <div id="image-preview-container"></div>
-
         <label>Description
           <textarea id="project-description" rows="4" required></textarea>
         </label>
-
         <label>Materials</label>
         <div id="materials-list"></div>
         <div class="materials-controls">
           <input type="text" id="material-input" placeholder="Add material...">
           <button id="btn-add-material" type="button">Add</button>
         </div>
-
         <div class="form-actions">
           <button type="submit" class="primary">Submit Project</button>
           <button type="button" id="btn-cancel-submit">Cancel</button>
@@ -58,7 +55,6 @@
     </section>
   </main>
 
-  <!-- Project details modal -->
   <div id="project-modal" class="modal hidden" role="dialog" aria-hidden="true">
     <div class="modal-content">
       <button id="modal-close" class="modal-close">&times;</button>
@@ -66,38 +62,25 @@
     </div>
   </div>
 
-  <!-- Simple login/signup dialog -->
   <div id="auth-modal" class="modal hidden" role="dialog" aria-hidden="true">
     <div class="modal-content auth">
       <button id="auth-close" class="modal-close">&times;</button>
-
       <div id="auth-forms">
         <div id="login-form" class="auth-form">
           <h3>Login</h3>
-          <label>Username
-            <input type="text" id="login-username">
-          </label>
-          <label>Password
-            <input type="password" id="login-password">
-          </label>
+          <label>Email <input type="text" id="login-username"></label>
+          <label>Password <input type="password" id="login-password"></label>
           <div class="form-actions">
             <button id="btn-login" class="primary">Login</button>
             <button id="btn-switch-to-signup" type="button">Sign up</button>
           </div>
           <div id="login-msg" class="msg"></div>
         </div>
-
         <div id="signup-form" class="auth-form hidden">
           <h3>Sign up</h3>
-          <label>Username
-            <input type="text" id="signup-username">
-          </label>
-          <label>Password
-            <input type="password" id="signup-password">
-          </label>
-          <label>Confirm Password
-            <input type="password" id="signup-password-confirm">
-          </label>
+          <label>Email <input type="text" id="signup-username"></label>
+          <label>Password <input type="password" id="signup-password"></label>
+          <label>Confirm Password <input type="password" id="signup-password-confirm"></label>
           <div class="form-actions">
             <button id="btn-signup" class="primary">Create account</button>
             <button id="btn-switch-to-login" type="button">Back to login</button>
@@ -107,7 +90,6 @@
       </div>
     </div>
   </div>
-
   <script src="app.js"></script>
 </body>
 </html>
