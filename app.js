@@ -1,10 +1,9 @@
-// --- CONFIGURATION ---
-// Replace these with your actual Supabase URL and Anon Key
+// --- Supabase Config (Using credentials from your screenshot) ---
 const SUPABASE_URL = 'https://nnrmgjtiyueakkxxixjr.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_0HsiyOX6cDuA9eP-4QJFeg_IZGGy-rn';
+const SUPABASE_KEY = 'sb_publishable_0Hsiy0X6cDuA9eP-4QJFeg_IZGGy-rn';
 const supabase = lib.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// --- DOM ELEMENTS ---
+// --- DOM Elements (Matching your original code) ---
 const welcomeText = document.getElementById('welcome-text');
 const btnShowLogin = document.getElementById('btn-show-login');
 const btnShowSignup = document.getElementById('btn-show-signup');
@@ -38,19 +37,18 @@ const signupMsg = document.getElementById('signup-msg');
 const loginFormSection = document.getElementById('login-form');
 const signupFormSection = document.getElementById('signup-form');
 
-// --- INITIALIZATION ---
+// --- Initialization ---
 async function init() {
   const { data: { session } } = await supabase.auth.getSession();
   renderUI(session?.user);
 
-  // Auto-refresh UI when login state changes
   supabase.auth.onAuthStateChange((_event, session) => {
     renderUI(session?.user);
   });
 }
 init();
 
-// --- CORE UI RENDERING ---
+// --- UI Logic ---
 async function renderUI(user) {
   if (user) {
     welcomeText.textContent = `Logged in as ${user.email}`;
@@ -68,7 +66,7 @@ async function renderUI(user) {
   renderProjectsGrid();
 }
 
-// --- PROJECT DISPLAY ---
+// --- Projects Logic ---
 async function renderProjectsGrid() {
   const { data: projects, error } = await supabase
     .from('projects')
@@ -78,8 +76,8 @@ async function renderProjectsGrid() {
   if (error) return;
 
   projectsGrid.innerHTML = '';
-  if (!projects || projects.length === 0) {
-    projectsGrid.innerHTML = '<p class="small">No projects yet.</p>';
+  if (!projects.length) {
+    projectsGrid.innerHTML = '<p class="small">No projects yet — be the first to submit!</p>';
     return;
   }
 
@@ -87,7 +85,7 @@ async function renderProjectsGrid() {
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
-      ${p.image ? `<img src="${p.image}" alt="${escapeHtml(p.title)}">` : `<div style="height:140px;background:#eef2ff;display:flex;align-items:center;justify-content:center;color:#254a8a">No image</div>`}
+      ${p.image ? `<img src="${p.image}">` : `<div style="height:140px;background:#eef2ff;display:flex;align-items:center;justify-content:center;">No image</div>`}
       <div class="card-body">
         <h3>${escapeHtml(p.title)}</h3>
         <p>${escapeHtml(p.description.slice(0, 100))}...</p>
@@ -95,26 +93,21 @@ async function renderProjectsGrid() {
           <div class="meta">By ${escapeHtml(p.author)}</div>
           <button onclick="openProjectModal('${p.id}')" class="primary">Open</button>
         </div>
-      </div>
-    `;
+      </div>`;
     projectsGrid.appendChild(card);
   });
 }
 
-// --- PROJECT SUBMISSION LOGIC ---
+// Same image/material logic from your original code
 let currentMaterials = [];
 let currentImageDataUrl = null;
 
 btnAddMaterial.onclick = () => {
-  const val = materialInput.value.trim();
-  if (val) {
-    currentMaterials.push(val);
-    materialInput.value = '';
-    renderMaterialsList();
-  }
+  const v = materialInput.value.trim();
+  if (v) { currentMaterials.push(v); materialInput.value = ''; renderMaterials(); }
 };
 
-function renderMaterialsList() {
+function renderMaterials() {
   materialsList.innerHTML = '';
   currentMaterials.forEach((m, i) => {
     const span = document.createElement('span');
@@ -122,128 +115,98 @@ function renderMaterialsList() {
     span.textContent = m + ' ';
     const del = document.createElement('button');
     del.textContent = '×';
-    del.onclick = () => { currentMaterials.splice(i, 1); renderMaterialsList(); };
+    del.onclick = () => { currentMaterials.splice(i, 1); renderMaterials(); };
     span.appendChild(del);
     materialsList.appendChild(span);
   });
 }
 
 imageInput.onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
   const reader = new FileReader();
-  reader.onload = (event) => {
-    currentImageDataUrl = event.target.result;
-    imagePreviewContainer.innerHTML = `<img src="${currentImageDataUrl}" style="max-width:100%;border-radius:6px;margin-top:8px">`;
+  reader.onload = (ev) => {
+    currentImageDataUrl = ev.target.result;
+    imagePreviewContainer.innerHTML = `<img src="${currentImageDataUrl}" style="max-width:200px">`;
   };
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(e.target.files[0]);
 };
 
+// --- Submit Project ---
 projectForm.onsubmit = async (e) => {
   e.preventDefault();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return alert("Please log in to submit a project.");
+  if (!user) return alert('Login first');
 
-  const newProject = {
-    title: document.getElementById('project-title').value.trim(),
-    description: document.getElementById('project-description').value.trim(),
+  const { error } = await supabase.from('projects').insert([{
+    title: document.getElementById('project-title').value,
+    description: document.getElementById('project-description').value,
     image: currentImageDataUrl,
     materials: currentMaterials,
     author: user.email
-  };
+  }]);
 
-  const { error } = await supabase.from('projects').insert([newProject]);
-
-  if (error) {
-    alert("Error saving project: " + error.message);
-  } else {
+  if (error) alert(error.message);
+  else {
     submitPanel.classList.add('hidden');
     projectForm.reset();
     currentMaterials = [];
-    currentImageDataUrl = null;
-    imagePreviewContainer.innerHTML = '';
-    renderMaterialsList();
     renderProjectsGrid();
   }
 };
 
-// --- MODAL & COMMENTS ---
+// --- Modal & Comments ---
 async function openProjectModal(id) {
-  const { data: project } = await supabase.from('projects').select('*').eq('id', id).single();
-  const { data: comments } = await supabase.from('comments').select('*').eq('project_id', id).order('created_at', { ascending: true });
+  const { data: p } = await supabase.from('projects').select('*').eq('id', id).single();
+  const { data: comments } = await supabase.from('comments').select('*').eq('project_id', id);
 
   modalBody.innerHTML = `
-    <h2>${escapeHtml(project.title)}</h2>
-    <div class="meta">By ${escapeHtml(project.author)}</div>
-    ${project.image ? `<img src="${project.image}" style="max-width:100%;margin:15px 0;border-radius:8px">` : ''}
-    <p>${escapeHtml(project.description)}</p>
+    <h2>${escapeHtml(p.title)}</h2>
+    <div class="meta">By ${escapeHtml(p.author)}</div>
+    ${p.image ? `<img src="${p.image}" style="max-width:100%;margin:10px 0;">` : ''}
+    <p>${escapeHtml(p.description)}</p>
     <h4>Materials</h4>
-    <div>${project.materials.map(m => `<span class="material-chip">${escapeHtml(m)}</span>`).join('')}</div>
-    <hr style="margin:20px 0;border:0;border-top:1px solid #eee">
+    <div>${p.materials.map(m => `<span class="material-chip">${m}</span>`).join('')}</div>
+    <hr>
     <h4>Comments</h4>
-    <div id="modal-comments-list" style="margin-bottom:15px">
-      ${comments.length ? comments.map(c => `<div style="margin-bottom:8px;font-size:0.9rem"><strong>${escapeHtml(c.author)}:</strong> ${escapeHtml(c.content)}</div>`).join('') : '<p class="small">No comments yet.</p>'}
-    </div>
-    <textarea id="new-comment-text" placeholder="Add a comment..." rows="2"></textarea>
-    <button onclick="postComment('${project.id}')" class="primary">Post Comment</button>
+    <div id="modal-comments">${comments.map(c => `<div class="comment"><b>${c.author}:</b> ${c.content}</div>`).join('')}</div>
+    <textarea id="comment-text" placeholder="Add a comment..."></textarea>
+    <button onclick="postComment('${p.id}')" class="primary">Post</button>
   `;
   projectModal.classList.remove('hidden');
 }
 
 async function postComment(projectId) {
-  const content = document.getElementById('new-comment-text').value.trim();
+  const content = document.getElementById('comment-text').value;
   const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return alert("Log in to comment.");
-  if (!content) return;
-
-  const { error } = await supabase.from('comments').insert([{
-    project_id: projectId,
-    author: user.email,
-    content: content
-  }]);
-
-  if (error) alert(error.message);
-  else openProjectModal(projectId); // Refresh modal
+  if (!user) return alert('Login to comment');
+  await supabase.from('comments').insert([{ project_id: projectId, author: user.email, content }]);
+  openProjectModal(projectId);
 }
 
-// --- AUTHENTICATION ---
+// --- Auth Handling ---
 btnLogin.onclick = async () => {
-  const email = loginUsername.value.trim();
-  const password = loginPassword.value;
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  
+  const { error } = await supabase.auth.signInWithPassword({
+    email: loginUsername.value,
+    password: loginPassword.value
+  });
   if (error) loginMsg.textContent = error.message;
   else authModal.classList.add('hidden');
 };
 
 btnSignup.onclick = async () => {
-  const email = signupUsername.value.trim();
-  const password = signupPassword.value;
-  if (password !== signupPasswordConfirm.value) {
-    signupMsg.textContent = "Passwords do not match";
-    return;
-  }
-  const { error } = await supabase.auth.signUp({ email, password });
-  
+  if (signupPassword.value !== signupPasswordConfirm.value) return signupMsg.textContent = "Passwords mismatch";
+  const { error } = await supabase.auth.signUp({
+    email: signupUsername.value,
+    password: signupPassword.value
+  });
   if (error) signupMsg.textContent = error.message;
-  else signupMsg.textContent = "Check your email for a confirmation link!";
+  else alert('Check your email for confirmation link!');
 };
 
-btnLogout.onclick = async () => {
-  await supabase.auth.signOut();
-};
+btnLogout.onclick = () => supabase.auth.signOut();
 
-// --- UI HELPERS ---
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-// Toggles (Same as original)
+// --- UI Helpers ---
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 btnToggleSubmit.onclick = () => submitPanel.classList.toggle('hidden');
-btnCancelSubmit.onclick = () => submitPanel.classList.add('hidden');
 modalClose.onclick = () => projectModal.classList.add('hidden');
 btnShowLogin.onclick = () => { authModal.classList.remove('hidden'); loginFormSection.classList.remove('hidden'); signupFormSection.classList.add('hidden'); };
 btnShowSignup.onclick = () => { authModal.classList.remove('hidden'); signupFormSection.classList.remove('hidden'); loginFormSection.classList.add('hidden'); };
